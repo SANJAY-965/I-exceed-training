@@ -1,0 +1,9 @@
+class student{
+
+}
+
+
+void main(){
+
+
+}
