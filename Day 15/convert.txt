@@ -1,0 +1,249 @@
+								    dart:convert
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+The dart:convert library in Dart is used for encoding and decoding data, such as:
+
+  -> JSON (JavaScript Object Notation)
+
+  -> UTF-8
+
+  -> Base64
+
+It's part of Dart's core libraries and is included automatically with Dart SDK—no need to install anything.
+
+
+1. JSON Encoding and Decoding
+-------------------------------
+
+jsonEncode() / jsonDecode()
+
+    Converts Dart objects to JSON strings and back.
+
+    Only encodes Map<String, dynamic> and List types.
+
+    Supports nested structures.
+    
+    
+Coding:
+-------
+import 'dart:convert';
+
+void main() {
+  // Example Dart map
+  Map<String, dynamic> user = {
+    'name': 'Alice',
+    'age': 30,
+    'email': 'alice@example.com',
+  };
+
+  // Convert Map to JSON string
+  String jsonString = jsonEncode(user);
+  print('JSON: $jsonString');
+
+  // Convert JSON string back to Map
+  Map<String, dynamic> decoded = jsonDecode(jsonString);
+  print('Name: ${decoded['name']}');
+}
+
+
+2. UTF-8 Encoding/Decoding
+------------------------------
+ -> UTF-8 is the default encoding for network communications.
+
+ -> Converts strings to byte lists and vice versa.
+
+Coding:
+-------
+
+import 'dart:convert';
+
+void main() {
+  String text = "Hello";
+
+  // Encode to UTF-8 bytes
+  List<int> bytes = utf8.encode(text);
+  print('UTF-8 bytes: $bytes');
+
+  // Decode from UTF-8 bytes
+  String decoded = utf8.decode(bytes);
+  print('Decoded string: $decoded');
+}
+
+
+3.Base64 Encoding/Decoding
+-------------------------------
+
+ -> Encodes bytes (e.g. from a file or image) into a Base64 string.
+
+ -> Common in data URLs, secure tokens, file transfer.
+
+Coding:
+-------
+
+import 'dart:convert';
+
+void main() {
+  String data = 'Dart is fun!';
+
+  // Encode to Base64
+  String encoded = base64.encode(utf8.encode(data));
+  print('Base64 Encoded: $encoded');
+
+  // Decode from Base64
+  String decoded = utf8.decode(base64.decode(encoded));
+  print('Base64 Decoded: $decoded');
+}
+
+
+
+Feature	Function
+--------       ---------
+JSON Encode	jsonEncode(obj)
+JSON Decode	jsonDecode(string)
+UTF-8 Encode	utf8.encode(string)
+UTF-8 Decode	utf8.decode(bytes)
+Base64 Encode	base64.encode(bytes)
+Base64 Decode	base64.decode(string)
+
+
+
+
+
+Advanced Tools & Classes
+✔️ Codec
+
+    A Codec<S, T> handles both encoding and decoding.
+
+    Example: Utf8Codec, JsonCodec, Base64Codec.
+
+Codec<String, List<int>> utf8Codec = utf8;
+List<int> bytes = utf8Codec.encode('hello');
+String text = utf8Codec.decode(bytes);
+
+✔️ Converter
+
+    One-way conversion: like String → List<int>.
+
+    Example: utf8.encoder (from Converter<String, List<int>>)
+
+var bytes = utf8.encoder.convert("hello");
+
+✔️ ChunkedConversionSink
+
+    For streaming conversion (e.g., network streams, file streams).
+
+    Allows you to process large data in chunks.
+
+🔁 Custom JSON Encoding/Decoding
+
+When using custom objects (like a User class), you need to manually define how to convert to/from JSON.
+Custom Object Example:
+
+class User {
+  final String name;
+  final int age;
+
+  User({required this.name, required this.age});
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(name: json['name'], age: json['age']);
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'name': name, 'age': age};
+  }
+}
+
+void main() {
+  var user = User(name: 'Bob', age: 25);
+
+  String jsonString = jsonEncode(user.toJson());
+  print(jsonString);
+
+  User newUser = User.fromJson(jsonDecode(jsonString));
+  print(newUser.name);
+}
+
+🧠 Best Practices
+
+    Always handle exceptions for jsonDecode() (e.g., FormatException).
+
+    Use try-catch when decoding dynamic or API input.
+
+    When dealing with unknown structure, always type-check decoded values.
+
+📦 Related Libraries
+
+If dart:convert is too basic or verbose, consider:
+
+    package:json_annotation + build_runner → for automatic JSON serialization.
+
+    package:equatable → makes value comparison easier for custom models.
+
+    package:encrypt or crypto → for more complex encoding, hashing, or cryptographic needs.
+
+
+
+
+
+
+
+
+We fetch a list of posts (/posts) from the API and display their titles.
+
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+// Define a model class
+class Post {
+  final int userId;
+  final int id;
+  final String title;
+  final String body;
+
+  Post({
+    required this.userId,
+    required this.id,
+    required this.title,
+    required this.body,
+  });
+
+  // Factory constructor to create a Post from JSON
+  factory Post.fromJson(Map<String, dynamic> json) {
+    return Post(
+      userId: json['userId'],
+      id: json['id'],
+      title: json['title'],
+      body: json['body'],
+    );
+  }
+}
+
+// Function to fetch posts
+Future<List<Post>> fetchPosts() async {
+  final response = await http.get(Uri.parse('https://jsonplaceholder.typicode.com/posts'));
+
+  if (response.statusCode == 200) {
+    // Decode JSON string to List<dynamic>
+    List<dynamic> data = jsonDecode(response.body);
+
+    // Convert each item to a Post object
+    return data.map((item) => Post.fromJson(item)).toList();
+  } else {
+    throw Exception('Failed to load posts');
+  }
+}
+
+void main() async {
+  try {
+    List<Post> posts = await fetchPosts();
+    for (var post in posts.take(5)) {
+      print('Post #${post.id}: ${post.title}');
+    }
+  } catch (e) {
+    print('Error: $e');
+  }
+}
+
+
+
